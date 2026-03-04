@@ -1,0 +1,9 @@
+{
+  "name": "agile-board-proxy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch proxy.ts",
+    "start": "bun run proxy.ts"
+  }
+}
