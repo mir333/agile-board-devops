@@ -43,11 +43,13 @@ export interface UserSettings {
   id: string;
   theme: "light" | "dark";
   language: string;
+  azureDevOpsOrg: string;
+  azureDevOpsPat: string;
   updatedAt: string;
 }
 
 export const userSettingsSchema: RxJsonSchema<UserSettings> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -60,6 +62,12 @@ export const userSettingsSchema: RxJsonSchema<UserSettings> = {
       enum: ["light", "dark"],
     },
     language: {
+      type: "string",
+    },
+    azureDevOpsOrg: {
+      type: "string",
+    },
+    azureDevOpsPat: {
       type: "string",
     },
     updatedAt: {

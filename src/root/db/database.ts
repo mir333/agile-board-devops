@@ -36,6 +36,13 @@ async function createDatabase(): Promise<AppDatabase> {
     },
     user_settings: {
       schema: userSettingsSchema,
+      migrationStrategies: {
+        1: (oldDoc: any) => ({
+          ...oldDoc,
+          azureDevOpsOrg: "",
+          azureDevOpsPat: "",
+        }),
+      },
     },
   });
 
