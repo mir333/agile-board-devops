@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useSettings } from "../hooks/useSettings";
 
@@ -48,6 +50,36 @@ export function SettingsForm() {
               <p className="text-sm text-muted-foreground">Choose your display language</p>
             </div>
             <Badge variant="secondary">{settings.language.toUpperCase()}</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Azure DevOps Connection</CardTitle>
+          <CardDescription>Configure your Azure DevOps integration</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="azure-devops-org">Organization URL</Label>
+            <Input
+              id="azure-devops-org"
+              placeholder="https://dev.azure.com/your-org"
+              value={settings.azureDevOpsOrg}
+              onChange={(e) => updateSettings({ azureDevOpsOrg: e.target.value })}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="azure-devops-pat">Personal Access Token</Label>
+            <Input
+              id="azure-devops-pat"
+              type="password"
+              placeholder="Enter your PAT"
+              value={settings.azureDevOpsPat}
+              onChange={(e) => updateSettings({ azureDevOpsPat: e.target.value })}
+              disabled={isLoading}
+            />
           </div>
         </CardContent>
       </Card>

@@ -36,4 +36,20 @@ describe("SettingsForm", () => {
       expect(screen.getByText("EN")).toBeInTheDocument();
     });
   });
+
+  it("renders Azure DevOps organization input", () => {
+    render(<SettingsForm />);
+    expect(screen.getByLabelText(/organization/i)).toBeInTheDocument();
+  });
+
+  it("renders Azure DevOps PAT input", () => {
+    render(<SettingsForm />);
+    expect(screen.getByLabelText(/personal access token/i)).toBeInTheDocument();
+  });
+
+  it("masks PAT input as password type", () => {
+    render(<SettingsForm />);
+    const patInput = screen.getByLabelText(/personal access token/i);
+    expect(patInput).toHaveAttribute("type", "password");
+  });
 });

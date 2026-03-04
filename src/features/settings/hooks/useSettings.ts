@@ -4,11 +4,15 @@ import { useDatabase } from "@/root/hooks/useDatabase";
 export interface SettingsState {
   theme: "light" | "dark";
   language: string;
+  azureDevOpsOrg: string;
+  azureDevOpsPat: string;
 }
 
 const defaultSettings: SettingsState = {
   theme: "light",
   language: "en",
+  azureDevOpsOrg: "",
+  azureDevOpsPat: "",
 };
 
 export function useSettings() {
@@ -28,6 +32,8 @@ export function useSettings() {
             id: "user-settings",
             theme: updated.theme,
             language: updated.language,
+            azureDevOpsOrg: updated.azureDevOpsOrg,
+            azureDevOpsPat: updated.azureDevOpsPat,
             updatedAt: new Date().toISOString(),
           });
         }
