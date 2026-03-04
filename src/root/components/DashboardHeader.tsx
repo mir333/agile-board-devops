@@ -29,6 +29,13 @@ export function DashboardHeader() {
             Dashboard
           </Link>
           <Link
+            to="/board"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-sm font-medium text-foreground" }}
+          >
+            Board
+          </Link>
+          <Link
             to="/settings"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             activeProps={{ className: "text-sm font-medium text-foreground" }}

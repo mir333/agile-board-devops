@@ -35,13 +35,19 @@ function renderWithRouter(
     component: () => null,
   });
 
+  const boardRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/board",
+    component: () => null,
+  });
+
   const settingsRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/settings",
     component: () => null,
   });
 
-  const routeTree = rootRoute.addChildren([indexRoute, settingsRoute]);
+  const routeTree = rootRoute.addChildren([indexRoute, boardRoute, settingsRoute]);
 
   const router = createRouter({
     routeTree,
