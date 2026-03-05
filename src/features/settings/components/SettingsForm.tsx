@@ -1,13 +1,34 @@
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useSettings } from "../hooks/useSettings";
+import { useSettings } from "@/root/hooks/useSettingsContext";
 
 export function SettingsForm() {
   const { settings, updateSettings, isLoading } = useSettings();
+
+  // Local form state for text inputs — only persisted on Save
+  const [azureOrg, setAzureOrg] = useState(settings.azureDevOpsOrg);
+  const [azurePat, setAzurePat] = useState(settings.azureDevOpsPat);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Sync local state when settings load from DB
+  useEffect(() => {
+    setAzureOrg(settings.azureDevOpsOrg);
+    setAzurePat(settings.azureDevOpsPat);
+    setIsDirty(false);
+  }, [settings.azureDevOpsOrg, settings.azureDevOpsPat]);
+
+  const handleSave = async () => {
+    await updateSettings({
+      azureDevOpsOrg: azureOrg,
+      azureDevOpsPat: azurePat,
+    });
+    setIsDirty(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -65,8 +86,11 @@ export function SettingsForm() {
             <Input
               id="azure-devops-org"
               placeholder="https://dev.azure.com/your-org"
-              value={settings.azureDevOpsOrg}
-              onChange={(e) => updateSettings({ azureDevOpsOrg: e.target.value })}
+              value={azureOrg}
+              onChange={(e) => {
+                setAzureOrg(e.target.value);
+                setIsDirty(true);
+              }}
               disabled={isLoading}
             />
           </div>
@@ -76,10 +100,21 @@ export function SettingsForm() {
               id="azure-devops-pat"
               type="password"
               placeholder="Enter your PAT"
-              value={settings.azureDevOpsPat}
-              onChange={(e) => updateSettings({ azureDevOpsPat: e.target.value })}
+              value={azurePat}
+              onChange={(e) => {
+                setAzurePat(e.target.value);
+                setIsDirty(true);
+              }}
               disabled={isLoading}
             />
+          </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={isLoading || !isDirty}
+            >
+              Save Connection
+            </Button>
           </div>
         </CardContent>
       </Card>
