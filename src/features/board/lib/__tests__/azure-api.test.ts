@@ -1,42 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type AzureConfig, buildWiqlQuery, fetchProjects, fetchWorkItems } from "../azure-api";
+import {
+  type AzureConfig,
+  executeSavedQuery,
+  fetchProjects,
+  fetchSavedQueries,
+} from "../azure-api";
 
 const mockConfig: AzureConfig = {
   org: "https://dev.azure.com/test-org",
   pat: "test-pat-token",
   proxyBaseUrl: "http://localhost:3001",
 };
-
-describe("buildWiqlQuery", () => {
-  it("builds query with project only", () => {
-    const query = buildWiqlQuery({ project: "MyProject" });
-    expect(query).toContain("[System.TeamProject] = 'MyProject'");
-  });
-
-  it("builds query with state filters", () => {
-    const query = buildWiqlQuery({
-      project: "MyProject",
-      states: ["Active", "New"],
-    });
-    expect(query).toContain("[System.State] IN ('Active','New')");
-  });
-
-  it("builds query with work item type filters", () => {
-    const query = buildWiqlQuery({
-      project: "MyProject",
-      types: ["Bug", "User Story"],
-    });
-    expect(query).toContain("[System.WorkItemType] IN ('Bug','User Story')");
-  });
-
-  it("builds query with area path filter", () => {
-    const query = buildWiqlQuery({
-      project: "MyProject",
-      areaPath: "MyProject\\Frontend",
-    });
-    expect(query).toContain("[System.AreaPath] UNDER 'MyProject\\Frontend'");
-  });
-});
 
 describe("fetchProjects", () => {
   beforeEach(() => {
@@ -68,7 +42,7 @@ describe("fetchProjects", () => {
   });
 });
 
-describe("fetchWorkItems", () => {
+describe("fetchSavedQueries", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -77,30 +51,122 @@ describe("fetchWorkItems", () => {
     vi.restoreAllMocks();
   });
 
-  it("runs WIQL query then batch-fetches details", async () => {
+  it("fetches query tree and flattens to leaf queries", async () => {
+    const mockResponse = {
+      value: [
+        {
+          id: "folder-1",
+          name: "My Queries",
+          isFolder: true,
+          hasChildren: true,
+          children: [
+            {
+              id: "q1",
+              name: "Active Bugs",
+              isFolder: false,
+              path: "My Queries/Active Bugs",
+            },
+            {
+              id: "q2",
+              name: "Sprint Items",
+              isFolder: false,
+              path: "My Queries/Sprint Items",
+            },
+          ],
+        },
+        {
+          id: "folder-2",
+          name: "Shared Queries",
+          isFolder: true,
+          hasChildren: true,
+          children: [
+            {
+              id: "q3",
+              name: "All Tasks",
+              isFolder: false,
+              path: "Shared Queries/All Tasks",
+            },
+          ],
+        },
+      ],
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(mockResponse), { status: 200 }),
+    );
+
+    const queries = await fetchSavedQueries(mockConfig);
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:3001/api/devops/_apis/wit/queries?$depth=2&$expand=minimal&api-version=7.1",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "X-Azure-Pat": "test-pat-token",
+        }),
+      }),
+    );
+    expect(queries).toEqual([
+      {
+        id: "q1",
+        name: "Active Bugs",
+        path: "My Queries/Active Bugs",
+        folder: "My Queries",
+      },
+      {
+        id: "q2",
+        name: "Sprint Items",
+        path: "My Queries/Sprint Items",
+        folder: "My Queries",
+      },
+      {
+        id: "q3",
+        name: "All Tasks",
+        path: "Shared Queries/All Tasks",
+        folder: "Shared Queries",
+      },
+    ]);
+  });
+
+  it("throws on non-200 response", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response("Not found", { status: 404, statusText: "Not Found" }),
+    );
+
+    await expect(fetchSavedQueries(mockConfig)).rejects.toThrow(
+      "Failed to fetch saved queries: 404",
+    );
+  });
+});
+
+describe("executeSavedQuery", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("executes query by ID then batch-fetches work items", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ workItems: [{ id: 1 }, { id: 2 }] }), { status: 200 }),
+        new Response(
+          JSON.stringify({ workItems: [{ id: 10 }, { id: 20 }] }),
+          { status: 200 },
+        ),
       )
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
             value: [
               {
-                id: 1,
-                fields: {
-                  "System.Title": "Bug 1",
-                  "System.State": "Active",
-                  "System.WorkItemType": "Bug",
-                },
+                id: 10,
+                fields: { "System.Title": "Item A" },
+                url: "u1",
               },
               {
-                id: 2,
-                fields: {
-                  "System.Title": "Story 1",
-                  "System.State": "New",
-                  "System.WorkItemType": "User Story",
-                },
+                id: 20,
+                fields: { "System.Title": "Item B" },
+                url: "u2",
               },
             ],
           }),
@@ -108,25 +174,23 @@ describe("fetchWorkItems", () => {
         ),
       );
 
-    const items = await fetchWorkItems(mockConfig, "MyProject", {
-      project: "MyProject",
-    });
+    const items = await executeSavedQuery(mockConfig, "query-guid-123");
 
     expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe(
+      "http://localhost:3001/api/devops/_apis/wit/wiql/query-guid-123?api-version=7.1",
+    );
     expect(items).toHaveLength(2);
-    expect(items[0].fields["System.Title"]).toBe("Bug 1");
+    expect(items[0].fields["System.Title"]).toBe("Item A");
   });
 
-  it("returns empty array when WIQL returns no items", async () => {
+  it("returns empty array when query returns no items", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ workItems: [] }), { status: 200 }),
     );
 
-    const items = await fetchWorkItems(mockConfig, "MyProject", {
-      project: "MyProject",
-    });
+    const items = await executeSavedQuery(mockConfig, "query-guid-empty");
 
     expect(items).toEqual([]);
-    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
