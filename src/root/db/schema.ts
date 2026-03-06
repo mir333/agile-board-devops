@@ -45,11 +45,13 @@ export interface UserSettings {
   language: string;
   azureDevOpsOrg: string;
   azureDevOpsPat: string;
+  azureDevOpsQueryId: string;
+  azureDevOpsQueryName: string;
   updatedAt: string;
 }
 
 export const userSettingsSchema: RxJsonSchema<UserSettings> = {
-  version: 1,
+  version: 2,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -68,6 +70,12 @@ export const userSettingsSchema: RxJsonSchema<UserSettings> = {
       type: "string",
     },
     azureDevOpsPat: {
+      type: "string",
+    },
+    azureDevOpsQueryId: {
+      type: "string",
+    },
+    azureDevOpsQueryName: {
       type: "string",
     },
     updatedAt: {

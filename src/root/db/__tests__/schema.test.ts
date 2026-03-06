@@ -11,4 +11,18 @@ describe("UserSettings schema", () => {
     expect(userSettingsSchema.properties).toHaveProperty("azureDevOpsPat");
     expect(userSettingsSchema.properties.azureDevOpsPat.type).toBe("string");
   });
+
+  it("includes azureDevOpsQueryId property", () => {
+    expect(userSettingsSchema.properties).toHaveProperty("azureDevOpsQueryId");
+    expect(userSettingsSchema.properties.azureDevOpsQueryId.type).toBe("string");
+  });
+
+  it("includes azureDevOpsQueryName property", () => {
+    expect(userSettingsSchema.properties).toHaveProperty("azureDevOpsQueryName");
+    expect(userSettingsSchema.properties.azureDevOpsQueryName.type).toBe("string");
+  });
+
+  it("has schema version 2", () => {
+    expect(userSettingsSchema.version).toBe(2);
+  });
 });

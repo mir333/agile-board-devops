@@ -42,6 +42,11 @@ async function createDatabase(): Promise<AppDatabase> {
           azureDevOpsOrg: "",
           azureDevOpsPat: "",
         }),
+        2: (oldDoc: any) => ({
+          ...oldDoc,
+          azureDevOpsQueryId: "",
+          azureDevOpsQueryName: "",
+        }),
       },
     },
   });

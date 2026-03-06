@@ -13,6 +13,8 @@ export interface SettingsState {
   language: string;
   azureDevOpsOrg: string;
   azureDevOpsPat: string;
+  azureDevOpsQueryId: string;
+  azureDevOpsQueryName: string;
 }
 
 const defaultSettings: SettingsState = {
@@ -20,6 +22,8 @@ const defaultSettings: SettingsState = {
   language: "en",
   azureDevOpsOrg: "",
   azureDevOpsPat: "",
+  azureDevOpsQueryId: "",
+  azureDevOpsQueryName: "",
 };
 
 interface SettingsContextValue {
@@ -51,6 +55,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             language: doc.language,
             azureDevOpsOrg: doc.azureDevOpsOrg ?? "",
             azureDevOpsPat: doc.azureDevOpsPat ?? "",
+            azureDevOpsQueryId: doc.azureDevOpsQueryId ?? "",
+            azureDevOpsQueryName: doc.azureDevOpsQueryName ?? "",
           });
         }
       } finally {
@@ -81,6 +87,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             language: updated.language,
             azureDevOpsOrg: updated.azureDevOpsOrg,
             azureDevOpsPat: updated.azureDevOpsPat,
+            azureDevOpsQueryId: updated.azureDevOpsQueryId,
+            azureDevOpsQueryName: updated.azureDevOpsQueryName,
             updatedAt: new Date().toISOString(),
           });
         }
