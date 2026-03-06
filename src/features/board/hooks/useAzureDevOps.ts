@@ -11,7 +11,7 @@ import {
   type WiqlFilters,
 } from "../lib/azure-api";
 
-const PROXY_BASE_URL = "http://localhost:3001";
+const PROXY_BASE_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:3001";
 
 export function useAzureDevOps() {
   const { settings } = useSettings();

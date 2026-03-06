@@ -58,6 +58,52 @@ export function buildWiqlQuery(filters: WiqlFilters): string {
   return `SELECT [System.Id] FROM WorkItems WHERE ${conditions.join(" AND ")} ORDER BY [System.CreatedDate] DESC`;
 }
 
+export interface ConnectionTestResult {
+  proxyReachable: boolean;
+  azureAuthenticated: boolean;
+  error?: string;
+}
+
+export async function testConnection(config: AzureConfig): Promise<ConnectionTestResult> {
+  // Step 1: Check if proxy is reachable
+  try {
+    const healthResponse = await fetch(`${config.proxyBaseUrl}/health`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!healthResponse.ok) {
+      return { proxyReachable: false, azureAuthenticated: false, error: "Proxy server returned an error" };
+    }
+  } catch {
+    return {
+      proxyReachable: false,
+      azureAuthenticated: false,
+      error: `Cannot reach proxy server at ${config.proxyBaseUrl}. Is it running?`,
+    };
+  }
+
+  // Step 2: Verify Azure credentials by fetching projects
+  try {
+    const response = await fetch(`${config.proxyBaseUrl}/api/devops/_apis/projects?api-version=7.1&$top=1`, {
+      method: "GET",
+      headers: proxyHeaders(config),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      return { proxyReachable: true, azureAuthenticated: false, error: "Invalid PAT or insufficient permissions" };
+    }
+
+    if (!response.ok) {
+      const body = await response.text();
+      return { proxyReachable: true, azureAuthenticated: false, error: `Azure DevOps error (${response.status}): ${body.slice(0, 200)}` };
+    }
+
+    return { proxyReachable: true, azureAuthenticated: true };
+  } catch {
+    return { proxyReachable: true, azureAuthenticated: false, error: "Request to Azure DevOps timed out or failed" };
+  }
+}
+
 export async function fetchProjects(config: AzureConfig): Promise<AzureProject[]> {
   const response = await fetch(`${config.proxyBaseUrl}/api/devops/_apis/projects?api-version=7.1`, {
     method: "GET",
