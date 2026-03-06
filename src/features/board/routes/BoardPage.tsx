@@ -1,83 +1,68 @@
 import type { Editor } from "@tldraw/editor";
 import { useCallback, useRef, useState } from "react";
 import { useSettings } from "@/features/settings/hooks/useSettings";
-import { BoardCanvas, placeWorkItemsOnCanvas } from "../components/BoardCanvas";
+import { BoardCanvas, syncWorkItemsOnCanvas } from "../components/BoardCanvas";
 import { ConnectionBanner } from "../components/ConnectionBanner";
-import { FilterPanel } from "../components/FilterPanel";
+import { QueryPanel } from "../components/QueryPanel";
 import { useAzureDevOps } from "../hooks/useAzureDevOps";
-import { useBoardFilters } from "../hooks/useBoardFilters";
 
 export function BoardPage() {
   const editorRef = useRef<Editor | null>(null);
-  const { settings } = useSettings();
-  const { isConfigured, projects, isLoading, error, loadProjects, loadWorkItems } =
+  const { settings, updateSettings } = useSettings();
+  const { isConfigured, savedQueries, isLoading, error, loadSavedQueries, executeSavedQuery } =
     useAzureDevOps();
 
-  const {
-    selectedProject,
-    setSelectedProject,
-    selectedStates,
-    setSelectedStates,
-    selectedTypes,
-    setSelectedTypes,
-    isFilterOpen,
-    toggleFilterPanel,
-    availableStates,
-    availableTypes,
-  } = useBoardFilters();
-
-  const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
+  const [hasLoadedQueries, setHasLoadedQueries] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   const handleEditorMount = useCallback(
     (editor: Editor) => {
       editorRef.current = editor;
-      if (isConfigured && !hasLoadedProjects) {
-        loadProjects();
-        setHasLoadedProjects(true);
+      if (isConfigured && !hasLoadedQueries) {
+        loadSavedQueries();
+        setHasLoadedQueries(true);
       }
     },
-    [isConfigured, hasLoadedProjects, loadProjects],
+    [isConfigured, hasLoadedQueries, loadSavedQueries],
   );
 
-  const handleProjectChange = useCallback(
-    (project: string) => {
-      setSelectedProject(project);
+  const handleQueryChange = useCallback(
+    (queryId: string) => {
+      const query = savedQueries.find((q) => q.id === queryId);
+      updateSettings({
+        azureDevOpsQueryId: queryId,
+        azureDevOpsQueryName: query?.name ?? "",
+      });
     },
-    [setSelectedProject],
+    [savedQueries, updateSettings],
   );
 
-  const handleLoadWorkItems = useCallback(async () => {
-    if (!selectedProject) return;
+  const handleSync = useCallback(async () => {
+    if (!settings.azureDevOpsQueryId) return;
 
-    const items = await loadWorkItems(selectedProject, {
-      project: selectedProject,
-      states: selectedStates.length > 0 ? selectedStates : undefined,
-      types: selectedTypes.length > 0 ? selectedTypes : undefined,
-    });
+    const items = await executeSavedQuery(settings.azureDevOpsQueryId);
 
-    if (editorRef.current && items && items.length > 0) {
-      placeWorkItemsOnCanvas(editorRef.current, items, settings.azureDevOpsOrg);
+    if (editorRef.current) {
+      syncWorkItemsOnCanvas(editorRef.current, items, settings.azureDevOpsOrg);
     }
-  }, [selectedProject, selectedStates, selectedTypes, loadWorkItems, settings.azureDevOpsOrg]);
+
+    setLastSynced(new Date());
+  }, [settings.azureDevOpsQueryId, settings.azureDevOpsOrg, executeSavedQuery]);
 
   return (
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
       <BoardCanvas onEditorMount={handleEditorMount} />
       <ConnectionBanner isConfigured={isConfigured} error={error} />
-      <FilterPanel
-        projects={projects}
-        selectedProject={selectedProject}
-        onProjectChange={handleProjectChange}
-        states={availableStates}
-        selectedStates={selectedStates}
-        onStatesChange={setSelectedStates}
-        types={availableTypes}
-        selectedTypes={selectedTypes}
-        onTypesChange={setSelectedTypes}
-        onLoad={handleLoadWorkItems}
+      <QueryPanel
+        queries={savedQueries}
+        selectedQueryId={settings.azureDevOpsQueryId}
+        onQueryChange={handleQueryChange}
+        onSync={handleSync}
         isLoading={isLoading}
-        isOpen={isFilterOpen}
-        onToggle={toggleFilterPanel}
+        isOpen={isPanelOpen}
+        onToggle={() => setIsPanelOpen((prev) => !prev)}
+        lastSynced={lastSynced}
       />
     </div>
   );
