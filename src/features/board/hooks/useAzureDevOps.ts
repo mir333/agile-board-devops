@@ -1,23 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 import {
-  type AreaPathNode,
   type AzureConfig,
-  type AzureProject,
   type AzureWorkItem,
-  fetchAreaPaths,
-  fetchProjects,
-  fetchWorkItems,
-  type WiqlFilters,
+  type SavedQuery,
+  executeSavedQuery as apiExecuteSavedQuery,
+  fetchSavedQueries as apiFetchSavedQueries,
 } from "../lib/azure-api";
 
 const PROXY_BASE_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:3001";
 
 export function useAzureDevOps() {
   const { settings } = useSettings();
-  const [projects, setProjects] = useState<AzureProject[]>([]);
-  const [workItems, setWorkItems] = useState<AzureWorkItem[]>([]);
-  const [areaPaths, setAreaPaths] = useState<AreaPathNode | null>(null);
+  const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,48 +27,30 @@ export function useAzureDevOps() {
     };
   }, [settings.azureDevOpsOrg, settings.azureDevOpsPat, isConfigured]);
 
-  const loadProjects = useCallback(async () => {
+  const loadSavedQueries = useCallback(async () => {
     if (!config) return;
     setIsLoading(true);
     setError(null);
     try {
-      const result = await fetchProjects(config);
-      setProjects(result);
+      const result = await apiFetchSavedQueries(config);
+      setSavedQueries(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load projects");
+      setError(err instanceof Error ? err.message : "Failed to load saved queries");
     } finally {
       setIsLoading(false);
     }
   }, [config]);
 
-  const loadAreaPaths = useCallback(
-    async (project: string) => {
-      if (!config) return;
+  const executeSavedQuery = useCallback(
+    async (queryId: string): Promise<AzureWorkItem[]> => {
+      if (!config) return [];
       setIsLoading(true);
       setError(null);
       try {
-        const result = await fetchAreaPaths(config, project);
-        setAreaPaths(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load area paths");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [config],
-  );
-
-  const loadWorkItems = useCallback(
-    async (project: string, filters: WiqlFilters) => {
-      if (!config) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await fetchWorkItems(config, project, filters);
-        setWorkItems(result);
+        const result = await apiExecuteSavedQuery(config, queryId);
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load work items");
+        setError(err instanceof Error ? err.message : "Failed to execute query");
         return [];
       } finally {
         setIsLoading(false);
@@ -84,13 +61,10 @@ export function useAzureDevOps() {
 
   return {
     isConfigured,
-    projects,
-    workItems,
-    areaPaths,
+    savedQueries,
     isLoading,
     error,
-    loadProjects,
-    loadAreaPaths,
-    loadWorkItems,
+    loadSavedQueries,
+    executeSavedQuery,
   };
 }

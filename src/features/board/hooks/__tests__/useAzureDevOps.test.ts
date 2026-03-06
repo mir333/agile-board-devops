@@ -9,7 +9,6 @@ vi.mock("@/root/hooks/useDatabase", () => ({
   }),
 }));
 
-// Must import after mocks
 const { SettingsProvider } = await import("@/root/hooks/useSettingsContext");
 const { useAzureDevOps } = await import("../useAzureDevOps");
 
@@ -31,13 +30,18 @@ describe("useAzureDevOps", () => {
     expect(result.current.isConfigured).toBe(false);
   });
 
-  it("provides loadProjects function", () => {
+  it("provides loadSavedQueries function", () => {
     const { result } = renderHook(() => useAzureDevOps(), { wrapper });
-    expect(typeof result.current.loadProjects).toBe("function");
+    expect(typeof result.current.loadSavedQueries).toBe("function");
   });
 
-  it("provides loadWorkItems function", () => {
+  it("provides executeSavedQuery function", () => {
     const { result } = renderHook(() => useAzureDevOps(), { wrapper });
-    expect(typeof result.current.loadWorkItems).toBe("function");
+    expect(typeof result.current.executeSavedQuery).toBe("function");
+  });
+
+  it("initializes with empty savedQueries array", () => {
+    const { result } = renderHook(() => useAzureDevOps(), { wrapper });
+    expect(result.current.savedQueries).toEqual([]);
   });
 });
