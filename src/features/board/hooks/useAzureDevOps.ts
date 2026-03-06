@@ -3,9 +3,9 @@ import { useSettings } from "@/features/settings/hooks/useSettings";
 import {
   type AzureConfig,
   type AzureWorkItem,
-  type SavedQuery,
   executeSavedQuery as apiExecuteSavedQuery,
   fetchSavedQueries as apiFetchSavedQueries,
+  type SavedQuery,
 } from "../lib/azure-api";
 
 const PROXY_BASE_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:3001";

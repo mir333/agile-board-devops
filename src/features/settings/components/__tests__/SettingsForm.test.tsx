@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@/test/test-utils";
 import { SettingsProvider } from "@/root/hooks/useSettingsContext";
+import { render, screen, waitFor } from "@/test/test-utils";
 import { SettingsForm } from "../SettingsForm";
 
 // Mock the database hook to avoid async state updates in tests

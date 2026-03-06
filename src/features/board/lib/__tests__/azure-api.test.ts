@@ -149,10 +149,7 @@ describe("executeSavedQuery", () => {
   it("executes query by ID then batch-fetches work items", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ workItems: [{ id: 10 }, { id: 20 }] }),
-          { status: 200 },
-        ),
+        new Response(JSON.stringify({ workItems: [{ id: 10 }, { id: 20 }] }), { status: 200 }),
       )
       .mockResolvedValueOnce(
         new Response(

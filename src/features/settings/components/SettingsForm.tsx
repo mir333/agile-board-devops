@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,10 +186,7 @@ export function SettingsForm() {
               {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Test Connection
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isLoading || !isDirty}
-            >
+            <Button onClick={handleSave} disabled={isLoading || !isDirty}>
               Save Connection
             </Button>
           </div>

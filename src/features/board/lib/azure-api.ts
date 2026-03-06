@@ -68,10 +68,7 @@ function flattenQueryTree(nodes: AzureQueryTreeNode[]): SavedQuery[] {
   return result;
 }
 
-async function batchFetchWorkItems(
-  config: AzureConfig,
-  ids: number[],
-): Promise<AzureWorkItem[]> {
+async function batchFetchWorkItems(config: AzureConfig, ids: number[]): Promise<AzureWorkItem[]> {
   if (ids.length === 0) {
     return [];
   }
@@ -108,9 +105,7 @@ async function batchFetchWorkItems(
     );
 
     if (!batchResponse.ok) {
-      throw new Error(
-        `Batch fetch failed: ${batchResponse.status} ${batchResponse.statusText}`,
-      );
+      throw new Error(`Batch fetch failed: ${batchResponse.status} ${batchResponse.statusText}`);
     }
 
     const batchData = await batchResponse.json();
@@ -120,9 +115,7 @@ async function batchFetchWorkItems(
   return allItems;
 }
 
-export async function testConnection(
-  config: AzureConfig,
-): Promise<ConnectionTestResult> {
+export async function testConnection(config: AzureConfig): Promise<ConnectionTestResult> {
   // Step 1: Check if proxy is reachable
   try {
     const healthResponse = await fetch(`${config.proxyBaseUrl}/health`, {
@@ -181,30 +174,21 @@ export async function testConnection(
   }
 }
 
-export async function fetchProjects(
-  config: AzureConfig,
-): Promise<AzureProject[]> {
-  const response = await fetch(
-    `${config.proxyBaseUrl}/api/devops/_apis/projects?api-version=7.1`,
-    {
-      method: "GET",
-      headers: proxyHeaders(config),
-    },
-  );
+export async function fetchProjects(config: AzureConfig): Promise<AzureProject[]> {
+  const response = await fetch(`${config.proxyBaseUrl}/api/devops/_apis/projects?api-version=7.1`, {
+    method: "GET",
+    headers: proxyHeaders(config),
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch projects: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
   return data.value;
 }
 
-export async function fetchSavedQueries(
-  config: AzureConfig,
-): Promise<SavedQuery[]> {
+export async function fetchSavedQueries(config: AzureConfig): Promise<SavedQuery[]> {
   const response = await fetch(
     `${config.proxyBaseUrl}/api/devops/_apis/wit/queries?$depth=2&$expand=minimal&api-version=7.1`,
     {
@@ -234,14 +218,11 @@ export async function executeSavedQuery(
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to execute saved query: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to execute saved query: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
-  const ids: number[] =
-    data.workItems?.map((wi: { id: number }) => wi.id) ?? [];
+  const ids: number[] = data.workItems?.map((wi: { id: number }) => wi.id) ?? [];
 
   return batchFetchWorkItems(config, ids);
 }

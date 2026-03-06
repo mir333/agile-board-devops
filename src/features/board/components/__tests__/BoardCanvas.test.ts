@@ -18,7 +18,9 @@ function makeWorkItem(id: number, title: string, state: string): AzureWorkItem {
   };
 }
 
-function makeMockEditor(existingShapes: Array<{ id: string; type: string; props: { workItemId: number } }>) {
+function makeMockEditor(
+  existingShapes: Array<{ id: string; type: string; props: { workItemId: number } }>,
+) {
   return {
     getCurrentPageShapes: vi.fn(() => existingShapes),
     updateShape: vi.fn(),
